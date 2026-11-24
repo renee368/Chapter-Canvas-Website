@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter & Canvas | Digital Book & Graphic Novel Archive</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border: #334155;
+            --tag-bg: rgba(56, 189, 248, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3.5rem 1rem 2rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.75rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        header h1 span {
+            color: var(--accent);
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Controls / Filters Section */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            fill: var(--text-secondary);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Book Grid Layout */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.75rem;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .book-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+
+        .book-banner {
+            height: 140px;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .book-genre {
+            background: var(--tag-bg);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .status-completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .status-reading { background: rgba(234, 179, 8, 0.15); color: #facc15; }
+        .status-toread { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+
+        .book-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .book-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            margin-bottom: 0.3rem;
+            color: #ffffff;
+        }
+
+        .book-author {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .book-snippet {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            margin-bottom: 1.25rem;
+            flex: 1;
+        }
+
+        .book-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+            margin-top: auto;
+        }
+
+        .rating {
+            color: #fbbf24;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .read-more {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .read-more:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 600px;
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .modal h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .modal .modal-author {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-section h4 {
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+
+        .modal-section p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 1rem;
+            font-style: italic;
+            color: #e2e8f0;
+            margin: 1rem 0;
+            background: rgba(56, 189, 248, 0.05);
+            padding: 0.75rem 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pdf-btn-container {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .pdf-btn {
+            display: inline-block;
+            background: var(--accent);
+            color: #0f172a;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .pdf-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 0;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Chapter <span>&</span> Canvas</h1>
+        <p>A curated literary archive featuring reviews, critical summaries, and direct access to full book PDFs.</p>
+    </header>
+
+    <div class="container">
+        <!-- Search & Filters -->
+        <div class="controls">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="searchInput" placeholder="Search by title, author, or keyword...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="Classic Literature">Classics & Plays</button>
+                <button class="filter-btn" data-filter="Graphic Novel">Graphic Novels</button>
+                <button class="filter-btn" data-filter="Literary Fiction">Literary Fiction</button>
+            </div>
+        </div>
+
+        <!-- Book Cards Grid -->
+        <div class="book-grid" id="bookGrid">
+            <!-- Populated dynamically via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Detailed Review Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <h2 id="modalTitle">Book Title</h2>
+            <div class="modal-author" id="modalAuthor">Author Name</div>
+            
+            <div class="modal-section">
+                <h4>Synopsis</h4>
+                <p id="modalSynopsis">Full summary goes here...</p>
+            </div>
+
+            <div class="modal-section">
+                <h4>Key Takeaway / Review</h4>
+                <p id="modalReview">Detailed review thoughts go here...</p>
+            </div>
+
+            <div class="modal-section">
+                <h4>Memorable Quote</h4>
+                <blockquote id="modalQuote">"Quote goes here..."</blockquote>
+            </div>
+
+            <div class="pdf-btn-container">
+                <a id="modalPdfBtn" href="#" target="_blank" rel="noopener noreferrer" class="pdf-btn">📄 Access Full Book PDF / Text</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database with updated non-Gutenberg PDF & Text links
+        const books = [
+            {
+                id: 1,
+                title: "Romeo and Juliet",
+                author: "William Shakespeare",
+                genre: "Classic Literature",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "The timeless tragic play about two young star-crossed lovers from feuding families.",
+                synopsis: "Set in Verona, two scions of warring noble families meet and fall deeply in love. Their secret marriage leads to a rapid sequence of fateful misunderstandings and tragedy that ultimately reconciles their households.",
+                review: "Shakespeare's quintessential exploration of youthful passion, societal friction, and poetic tragedy remains unmatched.",
+                quote: "These violent delights have violent ends.",
+                pdfUrl: "https://www.folger.edu/explore/shakespeares-works/romeo-and-juliet/"
+            },
+            {
+                id: 2,
+                title: "Pride and Prejudice",
+                author: "Jane Austen",
+                genre: "Classic Literature",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A witty comedy of manners examining class, marriage reputation, and personal growth.",
+                synopsis: "Follows Elizabeth Bennet as she deals with issues of manners, upbringing, morality, education, and marriage in the society of the landed gentry of the British Regency period.",
+                review: "Austen’s razor-sharp dialogue and brilliant character arcs make this an enduring masterpiece of social commentary.",
+                quote: "I could easily forgive his pride, if he had not mortified mine.",
+                pdfUrl: "https://www.planetebook.com/free-ebooks/pride-and-prejudice.pdf"
+            },
+            {
+                id: 3,
+                title: "Frankenstein",
+                author: "Mary Shelley",
+                genre: "Classic Literature",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "The pioneering gothic novel exploring scientific ambition, creation, and isolation.",
+                synopsis: "Young scientist Victor Frankenstein succeeds in creating artificial life, but horrified by his creature's appearance, he abandons it, setting off a chain of tragic confrontations.",
+                review: "A profound philosophical inquiry into ethics, parental responsibility, and what it truly means to be human.",
+                quote: "I am malicious because I am miserable.",
+                pdfUrl: "https://www.planetpublish.com/wp-content/uploads/2011/11/Frankenstein_T.pdf"
+            },
+            {
+                id: 4,
+                title: "1984",
+                author: "George Orwell",
+                genre: "Classic Literature",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A dystopian masterpiece exploring totalitarianism, surveillance, and truth manipulation.",
+                synopsis: "Winston Smith navigates a heavily surveilled totalitarian regime ruled by Big Brother, secretly rebelling against the Party's erasure of independent thought.",
+                review: "A chilling, prophetic warning about the fragility of objective truth and freedom.",
+                quote: "Freedom is the freedom to say that two plus two make four.",
+                pdfUrl: "https://www.planetebook.com/free-ebooks/1984.pdf"
+            },
+            {
+                id: 5,
+                title: "To Kill a Mockingbird",
+                author: "Harper Lee",
+                genre: "Classic Literature",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A powerful examination of racial injustice and moral growth in the American South.",
+                synopsis: "Young Scout Finch watches her father defend a Black man falsely accused of a crime in a deeply prejudiced Alabama town.",
+                review: "An emotional cornerstone of American literature balancing childhood innocence with moral courage.",
+                quote: "You never really understand a person until you consider things from his point of view.",
+                pdfUrl: "https://archive.org/details/to-kill-a-mockingbird-harper-lee_202012"
+            },
+            {
+                id: 6,
+                title: "A Distant Neighborhood",
+                author: "Jiro Taniguchi",
+                genre: "Graphic Novel",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A middle-aged businessman magically travels back in time to his 14-year-old self.",
+                synopsis: "A Tokyo businessman is miraculously transported back to his youth in 1963, retaining adult awareness while reliving his fourteenth year.",
+                review: "A breathtaking slice-of-life manga capturing nostalgia, regret, and parental sacrifice.",
+                quote: "Time flows relentlessly, carrying us forward whether we are ready or not.",
+                pdfUrl: "https://archive.org/search?query=jiro+taniguchi"
+            },
+            {
+                id: 7,
+                title: "Persepolis",
+                author: "Marjane Satrapi",
+                genre: "Graphic Novel",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A poignant autobiographical account of growing up during the Iranian Islamic Revolution.",
+                synopsis: "Depicts Satrapi's childhood in Tehran during the Islamic Revolution and her subsequent experiences living abroad.",
+                review: "Visually striking and emotionally honest, humanizing geopolitical history through intimate personal storytelling.",
+                quote: "To die for one's ideals is tragic, but to live for them is much harder.",
+                pdfUrl: "https://archive.org/search?query=persepolis+marjane+satrapi"
+            },
+            {
+                id: 8,
+                title: "Maus",
+                author: "Art Spiegelman",
+                genre: "Graphic Novel",
+                status: "Completed",
+                rating: "★★★★★",
+                snippet: "A groundbreaking graphic novel depicting a Holocaust survivor's harrowing experiences.",
+                synopsis: "Spiegelman interviews his Polish-Jewish father about surviving concentration camps, portraying historical figures as animals.",
+                review: "A towering achievement in the graphic novel medium documenting generational trauma.",
+                quote: "Things are bad enough already. Don't make it any worse.",
+                pdfUrl: "https://archive.org/search?query=maus+art+spiegelman"
+            }
+        ];
+
+        const bookGrid = document.getElementById('bookGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const closeModal = document.getElementById('closeModal');
+
+        // Modal Elements
+        const modalTitle = document.getElementById('modalTitle');
+        const modalAuthor = document.getElementById('modalAuthor');
+        const modalSynopsis = document.getElementById('modalSynopsis');
+        const modalReview = document.getElementById('modalReview');
+        const modalQuote = document.getElementById('modalQuote');
+        const modalPdfBtn = document.getElementById('modalPdfBtn');
+
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        function renderBooks() {
+            const filtered = books.filter(book => {
+                const matchesFilter = currentFilter === 'all' || book.genre === currentFilter;
+                const matchesSearch = book.title.toLowerCase().includes(searchQuery) || 
+                                      book.author.toLowerCase().includes(searchQuery) ||
+                                      book.snippet.toLowerCase().includes(searchQuery);
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                bookGrid.innerHTML = `<div class="no-results">No books found matching your criteria.</div>`;
+                return;
+            }
+
+            bookGrid.innerHTML = filtered.map(book => {
+                let statusClass = 'status-toread';
+                if (book.status === 'Completed') statusClass = 'status-completed';
+
+                return `
+                    <div class="book-card" onclick="openModal(${book.id})">
+                        <div class="book-banner">
+                            <span class="book-genre">${book.genre}</span>
+                            <span class="status-badge ${statusClass}">${book.status}</span>
+                        </div>
+                        <div class="book-content">
+                            <h3 class="book-title">${book.title}</h3>
+                            <div class="book-author">by ${book.author}</div>
+                            <p class="book-snippet">${book.snippet}</p>
+                            <div class="book-footer">
+                                <span class="rating">${book.rating}</span>
+                                <button class="read-more">Read Review & PDF &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openModal(id) {
+            const book = books.find(b => b.id === id);
+            if (!book) return;
+
+            modalTitle.textContent = book.title;
+            modalAuthor.textContent = `By ${book.author} • ${book.genre}`;
+            modalSynopsis.textContent = book.synopsis;
+            modalReview.textContent = book.review;
+            modalQuote.textContent = `"${book.quote}"`;
+            modalPdfBtn.href = book.pdfUrl;
+
+            modalOverlay.classList.add('active');
+        }
+
+        closeModal.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            renderBooks();
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                renderBooks();
+            });
+        });
+
+        // Initial render
+        renderBooks();
+    </script>
+</body>
+</html>
